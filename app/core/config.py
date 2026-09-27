@@ -42,6 +42,10 @@ class Settings:
     app_port: int
     log_level: str
     database_url: str | None
+    ncbi_email: str
+    ncbi_api_key: str
+    ncbi_tool: str
+    pubmed_max_results: int
 
     def __init__(self) -> None:
         self.groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
@@ -57,6 +61,10 @@ class Settings:
         self.log_level = os.getenv("LOG_LEVEL", "INFO").strip().upper()
         database_url = os.getenv("DATABASE_URL", "").strip()
         self.database_url = database_url or None
+        self.ncbi_email = os.getenv("NCBI_EMAIL", "").strip()
+        self.ncbi_api_key = os.getenv("NCBI_API_KEY", "").strip()
+        self.ncbi_tool = os.getenv("NCBI_TOOL", "MedicalClaimChecker").strip()
+        self.pubmed_max_results = _env_int("PUBMED_MAX_RESULTS", 5)
 
 
 settings = Settings()

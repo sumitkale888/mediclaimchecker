@@ -15,3 +15,7 @@ class KnowledgeBaseUnavailableError(AppError):
 
 class LLMServiceError(AppError):
     """Raised when the Groq LLM call fails or returns unusable output."""
+
+
+class PubMedServiceError(AppError):
+    """Raised when PubMed API calls fail or return unusable data."""

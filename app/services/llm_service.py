@@ -126,3 +126,30 @@ class LLMService:
                 last_error = exc
         logger.warning("Failed to parse LLM JSON output")
         raise LLMServiceError("The language model returned unreadable output.") from last_error
+
+    def generate_custom_response(self, system_prompt: str, user_prompt: str) -> dict[str, Any]:
+        """Generate a custom LLM response with given prompts and return parsed JSON."""
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+        try:
+            content = self._complete(messages, json_mode=True)
+        except LLMServiceError:
+            raise
+        except Exception as exc:
+            lowered = str(exc).lower()
+            if "json_validate_failed" in lowered or "failed to validate json" in lowered:
+                logger.warning("Groq JSON mode failed; retrying without response_format")
+                try:
+                    content = self._complete(messages, json_mode=False)
+                except LLMServiceError:
+                    raise
+                except Exception as retry_exc:
+                    logger.exception("Groq request failed after JSON-mode retry")
+                    raise LLMServiceError(self._public_error(retry_exc)) from retry_exc
+            else:
+                logger.exception("Groq request failed")
+                raise LLMServiceError(self._public_error(exc)) from exc
+
+        return self._parse_json(content)

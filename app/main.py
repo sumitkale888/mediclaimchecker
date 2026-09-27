@@ -11,8 +11,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routes.health import router as health_router
 from app.api.routes.verification import router as verification_router
+from app.api.routes.pubmed import router as pubmed_router
 from app.core.config import settings
-from app.core.exceptions import KnowledgeBaseEmptyError, KnowledgeBaseUnavailableError, LLMServiceError
+from app.core.exceptions import KnowledgeBaseEmptyError, KnowledgeBaseUnavailableError, LLMServiceError, PubMedServiceError
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level, logging.INFO),
@@ -28,6 +29,7 @@ app = FastAPI(
 
 app.include_router(health_router)
 app.include_router(verification_router)
+app.include_router(pubmed_router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -53,6 +55,11 @@ async def unavailable_kb_handler(_request: Request, exc: KnowledgeBaseUnavailabl
 
 @app.exception_handler(LLMServiceError)
 async def llm_error_handler(_request: Request, exc: LLMServiceError) -> JSONResponse:
+    return JSONResponse(status_code=503, content={"detail": str(exc)})
+
+
+@app.exception_handler(PubMedServiceError)
+async def pubmed_error_handler(_request: Request, exc: PubMedServiceError) -> JSONResponse:
     return JSONResponse(status_code=503, content={"detail": str(exc)})
 
 
