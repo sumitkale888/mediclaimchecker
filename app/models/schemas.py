@@ -49,6 +49,7 @@ class VerifyResponse(BaseModel):
     explanation: str
     retrieved_facts: list[RetrievedFact]
     disclaimer: str
+    cluster_id: int | None = Field(None, description="K-Means cluster ID for semantic analysis")
 
 
 class HealthResponse(BaseModel):
@@ -71,3 +72,35 @@ class LLMVerificationResult(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0)
     explanation: str
     disclaimer: str = ""
+
+
+class ClusterAnalysisRequest(BaseModel):
+    """Request for cluster analysis."""
+
+    claim: str = Field(..., description="Medical claim to analyze")
+
+
+class ClusterAnalysisResponse(BaseModel):
+    """Response from cluster analysis."""
+
+    claim: str
+    predicted_cluster_id: int
+    example_claims: list[str] = Field(default_factory=list)
+    note: str | None = None
+
+
+class ClusterStatsResponse(BaseModel):
+    """Response with cluster statistics."""
+
+    total_clusters: int
+    model_type: str
+    cluster_distribution: dict[int, str]
+    model_path: str
+
+
+class ClusterExamplesResponse(BaseModel):
+    """Response with cluster examples."""
+
+    cluster_id: int
+    example_claims: list[str]
+    note: str | None = None

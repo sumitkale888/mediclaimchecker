@@ -5,6 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 
 from app.services.embedding_service import EmbeddingService
+from app.services.kmeans_service import KMeansService
 from app.services.llm_service import LLMService
 from app.services.rag_service import RAGService
 from app.services.retrieval_service import RetrievalService
@@ -35,8 +36,17 @@ def get_llm_service() -> LLMService:
 
 
 @lru_cache
+def get_kmeans_service() -> KMeansService:
+    try:
+        return KMeansService()
+    except Exception:
+        return None
+
+
+@lru_cache
 def get_rag_service() -> RAGService:
     return RAGService(
         retrieval_service=get_retrieval_service(),
         llm_service=get_llm_service(),
+        kmeans_service=get_kmeans_service(),
     )

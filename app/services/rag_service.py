@@ -6,6 +6,7 @@ import logging
 
 from app.models.schemas import LLMVerificationResult, RetrievedFact, VerifyResponse
 from app.prompts.verification_prompt import build_verification_prompt
+from app.services.kmeans_service import KMeansService, KMeansServiceError
 from app.services.llm_service import LLMService
 from app.services.retrieval_service import RetrievalService
 
@@ -24,17 +25,38 @@ class RAGService:
         self,
         retrieval_service: RetrievalService | None = None,
         llm_service: LLMService | None = None,
+        kmeans_service: KMeansService | None = None,
     ) -> None:
         self.retrieval_service = retrieval_service or RetrievalService()
         self.llm_service = llm_service or LLMService()
+        self.kmeans_service = kmeans_service
 
     def verify_claim(self, claim: str) -> VerifyResponse:
         """Retrieve facts, generate a grounded verdict, and attach retrieved evidence."""
         logger.info("Verifying claim (%s chars)", len(claim))
+
+        # Get cluster ID if K-Means service is available
+        cluster_id = None
+        if self.kmeans_service is not None:
+            try:
+                cluster_id = self.kmeans_service.predict_cluster(claim)
+                logger.info("Claim assigned to cluster %d by K-Means", cluster_id)
+            except Exception as exc:
+                logger.warning("K-Means cluster prediction failed: %s. Continuing without cluster information.", exc)
+                # Continue without cluster information
+                cluster_id = None
+
+        # Retrieve facts using original semantic similarity
         retrieved_facts = self.retrieval_service.retrieve(claim)
+        logger.info("ChromaDB retrieval performed, retrieved %d facts", len(retrieved_facts))
+
+        # Generate verification using original RAG pipeline
         prompt = build_verification_prompt(claim, retrieved_facts)
         llm_result = self.llm_service.generate_verification(prompt)
         validated = self._validate_result(llm_result, retrieved_facts)
+
+        logger.info("Evidence passed to LLM, verification complete")
+
         return VerifyResponse(
             claim=claim,
             verdict=validated.verdict,
@@ -42,6 +64,7 @@ class RAGService:
             explanation=validated.explanation,
             retrieved_facts=retrieved_facts,
             disclaimer=validated.disclaimer or DEFAULT_DISCLAIMER,
+            cluster_id=cluster_id,  # Add cluster ID as additional metadata
         )
 
     def _validate_result(

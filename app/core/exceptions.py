@@ -19,3 +19,7 @@ class LLMServiceError(AppError):
 
 class PubMedServiceError(AppError):
     """Raised when PubMed API calls fail or return unusable data."""
+
+
+class KMeansServiceError(AppError):
+    """Raised when K-Means clustering operations fail."""
