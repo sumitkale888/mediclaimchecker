@@ -29,6 +29,6 @@ How to run
 15. Use POST /api/v1/verify for the medical-facts pipeline.
 16. Enter a claim in the request body.
 17. Use POST /api/v1/pubmed/verify for the PubMed pipeline.
-18. Enter a medical claim in the request body.
+18. Enter a medical claim in the request body.,
 19. Pipeline 1 retrieves relevant facts from ChromaDB.
 20. Pipeline 2 retrieves relevant research papers from PubMed and sends the evidence to the LLM.
